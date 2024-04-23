@@ -5,9 +5,8 @@ import * as fs from 'fs';
 export class AppService {
 
   uploadImage(files: any) {
-    let temp = files[0]
    
-      console.log(temp)
+      console.log(files)
     
   
 
