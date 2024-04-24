@@ -9,12 +9,11 @@ export class AppController {
   @Post()
   @UseInterceptors( FilesInterceptor('files[]', 5,))
   uploadImage(@UploadedFiles() files:any, @Body() width:any, @Body() height:any): any {
-    this.appService.uploadImage(files)
+    this.appService.uploadImage(files, width, height)
   }
 
   @Get()
   checkStatus(): any {
-   
   }
 
   @Get('stats')
