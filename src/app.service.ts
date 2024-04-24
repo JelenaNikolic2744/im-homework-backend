@@ -1,55 +1,70 @@
 import { Injectable } from '@nestjs/common';
-import * as fs from 'fs';
-import { promisify } from 'util';
-import * as AWS from 'aws-sdk';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
-
-const writeFileAsync = promisify(fs.writeFile);
-
+let size = 0
 
 @Injectable()
 export class AppService {
   AWS_S3_BUCKET = 'im-homework';
-  s3 = new AWS.S3({
-    apiVersion:"2006-03-01",
-    region: "us-east-1",
-  
-  });
 
-  async uploadImage(files) {
-    console.log(files);
-    if (files.length < 0) {
-      return Error
+  constructor(private configService: ConfigService){}
+
+  getSize(){
+    return size
+  }
+
+  countSize(files){
+    if(files.length === 1){
+      size += files[0].size
     }
-    let file = files[0]
+    else{
+      files.forEach(file => {
+        size += file.size
+      });
+    }
+  }
+
+  s3Client = new S3Client({
+    region: 'us-east-1',
+    credentials: {
+      accessKeyId: this.configService.get('ACCESSKEYID'),
+      secretAccessKey: this.configService.get('SECRETACCESSKEY'),
+    },
+  });
+  async uploadImage(files) {
+    this.countSize(files)
+    console.log(files);
+    if (files.length === 0) {
+      return Error;
+    }
+    let file = files[0];
     const { originalname } = file;
 
-    return await this.s3_upload(
+    let temp = await this.s3_upload(
       file.buffer,
       this.AWS_S3_BUCKET,
       originalname,
       file.mimetype,
     );
+    console.log(temp)
+
+    return temp
   }
 
   async s3_upload(file, bucket, name, mimetype) {
-    const params = {
-      Bucket: bucket,
-      Key: String(name),
-      Body: file,
-      ACL: 'public-read',
-      ContentType: mimetype,
-      ContentDisposition: 'inline',
-    };
-
     try {
-      let s3Response = await this.s3.upload(params).promise();
+      let s3Response = await this.s3Client.send(
+        new PutObjectCommand({
+          Bucket: bucket,
+          Key: String(name),
+          Body: file,
+          ContentType: mimetype,
+        }),
+      );
       return s3Response;
     } catch (e) {
       console.log(e);
     }
   }
-
-  // async uploadImage(files: any) {
-  // }
 }
