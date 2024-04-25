@@ -13,8 +13,7 @@ export class AppController {
   }
 
   @Get()
-  checkStatus(): any {
-  }
+  checkStatus(): any {}
 
   @Get('stats')
   getStats(){

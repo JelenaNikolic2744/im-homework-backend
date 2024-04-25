@@ -1,23 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import { ConfigService } from '@nestjs/config';
 import { MessageProducerService } from './producerModule/messageProducer.service';
 
 
 @Injectable()
 export class UploadImagesS3Service {
 
-    constructor(private configService: ConfigService,
-        private messageProducer: MessageProducerService) { }
+    constructor(private messageProducer: MessageProducerService) { }
 
     s3Client = new S3Client({
         region: 'us-east-1',
         credentials: {
-            accessKeyId: this.configService.get('ACCESSKEYID'),
-            secretAccessKey: this.configService.get('SECRETACCESSKEY'),
+            accessKeyId: process.env.ACCESSKEYID,
+            secretAccessKey: process.env.SECRETACCESSKEY,
         },
     });
-    async uploadImageS3(files, width, height) {
+    async uploadImageS3(files: any, width: any, height: any) {
         if (files.length === 0) {
             return Error;
         }
@@ -28,7 +26,7 @@ export class UploadImagesS3Service {
                 console.log(file)
                 uploadedImages.push(this.s3_upload(
                     file.buffer,
-                    this.configService.get('AWSS3BUCKET'),
+                    process.env.AWSS3BUCKET,
                     file.originalname,
                     file.mimetype,
                 ))
@@ -36,7 +34,6 @@ export class UploadImagesS3Service {
         }
         let sqsData =[]
         await Promise.all(uploadedImages).then((value) => {
-            console.log(value)
             files.forEach((data) => {
                 sqsData.push({width:width.width, height:height.height, nameKey:data.originalname})
             })
@@ -46,7 +43,7 @@ export class UploadImagesS3Service {
         return uploadedImages
     }
 
-    async s3_upload(file, bucket, name, mimetype) {
+    async s3_upload(file: any, bucket: any, name: any, mimetype: any) {
         try {
             let s3Response = await this.s3Client.send(
                 new PutObjectCommand({

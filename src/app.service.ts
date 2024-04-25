@@ -9,7 +9,7 @@ export class AppService {
 
   constructor(private uploadImagesS3Service: UploadImagesS3Service) { }
 
-  uploadImage(files, width, height) {
+  uploadImage(files: any, width: any, height: any) {
     this.countSize(files)
     return this.uploadImagesS3Service.uploadImageS3(files, width, height)
   }
@@ -18,7 +18,7 @@ export class AppService {
     return size
   }
 
-  countSize(files) {
+  countSize(files: any) {
     files.forEach(file => {
       size += file.size
     });
